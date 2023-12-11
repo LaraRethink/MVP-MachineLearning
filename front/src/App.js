@@ -6,6 +6,12 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
+const predictionMap = {
+  1: "Nenhum método contraceptivo",
+  2: "Método contraceptivo de longo prazo",
+  3: "Método contraceptivo de curto prazo",
+};
+
 function App() {
   const [formData, setFormData] = useState({
     wifeAge: "18",
@@ -18,6 +24,8 @@ function App() {
     standardOfLivingIndex: "1",
     mediaExposure: "1",
   });
+  const [prediction, setPrediction] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,15 +36,16 @@ function App() {
     e.preventDefault();
 
     try {
-      const backendUrl = "http://localhost:5000/predict";
+      const response = await axios.post(
+        "http://localhost:5000/predict",
+        formData
+      );
 
-      // Send a POST request to the backend with the form data
-      const response = await axios.post(backendUrl, formData);
-
-      // Handle the response as needed
-      console.log("Backend Response:", response.data);
+      setError(null);
+      setPrediction(response.data?.prediction);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      setError(error);
+      setPrediction(null);
     }
   };
 
@@ -166,6 +175,22 @@ function App() {
           Enviar
         </Button>
       </Form>
+
+      <Container fluid className="my-5">
+        {prediction != null ? (
+          <p className="border border-success p-3">
+            A predição do modelo indica que o método contraceptivo em uso é:
+            <br />
+            {predictionMap[prediction]}
+          </p>
+        ) : error != null ? (
+          <p className="border border-warning p-3">
+            Houve um erro: {error?.message ?? JSON.stringify(error)}
+          </p>
+        ) : (
+          <></>
+        )}
+      </Container>
     </Container>
   );
 }
